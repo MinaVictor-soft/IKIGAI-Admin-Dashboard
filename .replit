@@ -1,0 +1,48 @@
+entrypoint = "admin-dashboard/src/main.tsx"
+run = "cd admin-dashboard && npm install --include=dev && npx vite build && npx vite preview"
+modules = ["nodejs-20"]
+[nix]
+channel = "unstable"
+[env]
+NODE_ENV = "production"
+[packager]
+language = "nodejs"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3000
+[workflows]
+runButton = "Project"
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd admin-dashboard && npm install --include=dev && npx vite build && (npx vite build --watch &) && npx vite preview"
+waitForPort = 5000
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+[agent]
+expertMode = true
+[deployment]
+deploymentTarget = "autoscale"
+build = [
+  "bash",
+  "-c",
+  "cd admin-dashboard && npm install --include=dev && npx vite build",
+]
+publicDir = "admin-dashboard/dist"
+run = ["bash", "-c", "npx serve admin-dashboard/dist -s -l 5000"]

@@ -1,0 +1,32 @@
+{
+  "name": "ikigai-quest",
+  "version": "1.0.0",
+  "description": "Complete gamification platform for conferences and events",
+  "main": "backend/src/app.ts",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "start": "bash start.sh",
+    "dev": "bash start.sh",
+    "backend": "cd backend && npm run dev",
+    "web": "cd web-app && npm run dev",
+    "admin": "cd admin-dashboard && npm run dev",
+    "build": "npm run build:backend && npm run build:web && npm run build:admin",
+    "build:backend": "cd backend && npm run build",
+    "build:web": "cd web-app && npm run build",
+    "build:admin": "cd admin-dashboard && npm run build"
+  },
+  "keywords": [
+    "gamification",
+    "conference",
+    "events",
+    "quiz",
+    "leaderboard",
+    "xp"
+  ],
+  "author": "MinaVictor",
+  "license": "MIT",
+  "dependencies": {
+    "docx": "^9.7.1",
+    "serve": "^14.2.6"
+  }
+}
