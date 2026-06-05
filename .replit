@@ -1,0 +1,16 @@
+entrypoint = "src/main.tsx"
+run = "npm run dev"
+
+[nix]
+channel = "unstable"
+
+[env]
+NODE_ENV = "production"
+VITE_API_URL = "https://ikigai-app-backend.replit.app/api"
+
+[packager]
+language = "nodejs"
+
+[[ports]]
+localPort = 5173
+externalPort = 80
