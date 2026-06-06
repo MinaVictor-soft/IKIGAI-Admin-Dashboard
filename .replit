@@ -1,5 +1,5 @@
-entrypoint = "src/main.tsx"
-run = "npm run dev"
+entrypoint = "dist/index.html"
+run = "npm run build && npm run preview"
 modules = ["nodejs-20"]
 
 [nix]
@@ -9,8 +9,8 @@ channel = "unstable"
 language = "nodejs"
 
 [[ports]]
-localPort = 5000
-externalPort = 5000
+localPort = 4173
+externalPort = 80
 
 [userenv]
 
