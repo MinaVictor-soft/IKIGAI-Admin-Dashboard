@@ -226,7 +226,7 @@ export default function UsersPage() {
         <CreateUserModal
           tribes={tribes || []}
           onClose={() => setShowCreate(false)}
-          onSubmit={(data) => createUser.mutate(data)}
+          onSubmit={(data: any) => createUser.mutate(data)}
           loading={createUser.isPending}
         />
       )}
