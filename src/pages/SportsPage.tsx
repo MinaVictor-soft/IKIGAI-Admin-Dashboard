@@ -311,7 +311,11 @@ export default function SportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {standings?.map((t: any, i: number) => (
+              {standingsLoading ? (
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Loading...</td></tr>
+              ) : standingsError ? (
+                <tr><td colSpan={8} className="text-center py-8 text-red-400">Failed to load standings. Please check your connection and try again.</td></tr>
+              ) : standings?.map((t: any, i: number) => (
                 <tr key={t.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-bold text-gray-400">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{t.name}</td>
