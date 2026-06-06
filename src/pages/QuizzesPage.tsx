@@ -302,40 +302,86 @@ function AddQuestionModal({ quiz, onClose, onSubmit, loading }: any) {
     set('options', opts);
   };
 
+  // Get options based on question type
+  const getDisplayOptions = () => {
+    if (form.questionType === 'TRUE_FALSE') {
+      return [{ id: 'true', text: 'True' }, { id: 'false', text: 'False' }];
+    } else if (form.questionType === 'SHORT_ANSWER') {
+      return [];
+    }
+    return form.options.filter(o => o.text);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold mb-1">{t('addQuestion')}</h3>
         <p className="text-sm text-gray-500 mb-4">"{quiz.title}"</p>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, points: Number(form.points), displayOrder: Number(form.displayOrder), options: form.options.filter(o => o.text) }); }} className="space-y-3">
+        <form onSubmit={(e) => { 
+          e.preventDefault(); 
+          const submitData = { 
+            ...form, 
+            points: Number(form.points), 
+            displayOrder: Number(form.displayOrder),
+            options: form.questionType === 'TRUE_FALSE' ? [{ id: 'true', text: 'True' }, { id: 'false', text: 'False' }] : (form.questionType === 'SHORT_ANSWER' ? [] : form.options.filter(o => o.text))
+          };
+          onSubmit(submitData); 
+        }} className="space-y-3">
           <textarea value={form.questionText} onChange={(e) => set('questionText', e.target.value)} placeholder="Question text *" required className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} />
           <select value={form.questionType} onChange={(e) => set('questionType', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
             <option value="MULTIPLE_CHOICE">{t('multipleChoice')}</option>
             <option value="TRUE_FALSE">{t('trueFalse')}</option>
             <option value="SHORT_ANSWER">{t('shortAnswer')}</option>
           </select>
+
           {form.questionType === 'MULTIPLE_CHOICE' && (
             <div className="space-y-2">
               <label className="text-xs text-gray-500">{t('options')}</label>
               {form.options.map((opt, i) => (
                 <div key={opt.id} className="flex items-center gap-2">
+                  <input type="radio" name="correct" value={opt.id} checked={form.correctAnswer === opt.id} onChange={(e) => set('correctAnswer', e.target.value)} className="w-4 h-4" />
                   <span className="text-xs font-medium text-gray-400 w-5">{opt.id})</span>
                   <input value={opt.text} onChange={(e) => updateOption(i, e.target.value)} placeholder={`${t('option')} ${opt.id}`} className="flex-1 px-3 py-2 border rounded-lg text-sm" />
                 </div>
               ))}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-xs text-gray-500">{t('correctAnswer')} *</label><input value={form.correctAnswer} onChange={(e) => set('correctAnswer', e.target.value)} required placeholder="e.g. b" className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
-            <div><label className="text-xs text-gray-500">{t('explanation')}</label><input value={form.explanation} onChange={(e) => set('explanation', e.target.value)} placeholder={t('whyThisAnswer')} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
+
+          {form.questionType === 'TRUE_FALSE' && (
+            <div className="space-y-2">
+              <label className="text-xs text-gray-500">{t('selectCorrectAnswer')}</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="radio" name="correct" value="true" checked={form.correctAnswer === 'true'} onChange={(e) => set('correctAnswer', e.target.value)} className="w-4 h-4" />
+                  <label className="flex-1 cursor-pointer text-sm">True</label>
+                </div>
+                <div className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="radio" name="correct" value="false" checked={form.correctAnswer === 'false'} onChange={(e) => set('correctAnswer', e.target.value)} className="w-4 h-4" />
+                  <label className="flex-1 cursor-pointer text-sm">False</label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {form.questionType === 'SHORT_ANSWER' && (
+            <div className="space-y-2">
+              <label className="text-xs text-gray-500">{t('correctAnswer')} *</label>
+              <input value={form.correctAnswer} onChange={(e) => set('correctAnswer', e.target.value)} required placeholder="Expected answer" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500">{t('explanation')}</label>
+            <input value={form.explanation} onChange={(e) => set('explanation', e.target.value)} placeholder={t('whyThisAnswer')} className="w-full px-3 py-2 border rounded-lg text-sm" />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs text-gray-500">{t('points')}</label><input type="number" value={form.points} onChange={(e) => set('points', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
             <div><label className="text-xs text-gray-500">{t('order')}</label><input type="number" value={form.displayOrder} onChange={(e) => set('displayOrder', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm">{t('cancel')}</button>
-            <button type="submit" disabled={loading} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">{loading ? '...' : t('addQuestion')}</button>
+            <button type="submit" disabled={loading || !form.correctAnswer} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">{loading ? '...' : t('addQuestion')}</button>
           </div>
         </form>
       </div>

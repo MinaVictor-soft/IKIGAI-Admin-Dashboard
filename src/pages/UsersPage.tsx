@@ -105,6 +105,7 @@ export default function UsersPage() {
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('name')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('email')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('role')}</th>
+                <th className="text-start px-4 py-3 font-medium text-gray-600">🏛️ الكنيسة</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('tribe')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('conferenceXp')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('sportsXp')}</th>
@@ -115,11 +116,11 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={9} className="text-center py-8 text-gray-400">{t('loading')}</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400">{t('loading')}</td></tr>
               ) : isError ? (
-                <tr><td colSpan={9} className="text-center py-8 text-red-400">Failed to load users. Please check your connection and try again.</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-red-400">Failed to load users. Please check your connection and try again.</td></tr>
               ) : users?.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-8 text-gray-400">{t('noUsersFound')}</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400">{t('noUsersFound')}</td></tr>
               ) : (
                 users?.filter((u: any) => {
                   if (!searchQuery.trim()) return true;
@@ -138,6 +139,9 @@ export default function UsersPage() {
                         u.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>{u.role}</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {u.church}{u.diocese ? ` • ${u.diocese}` : ''}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
