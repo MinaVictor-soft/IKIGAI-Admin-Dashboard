@@ -141,7 +141,10 @@ export default function UsersPage() {
                       }`}>{u.role}</span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {u.church}{u.diocese ? ` • ${u.diocese}` : ''}
+                      <div className="space-y-0.5">
+                        {u.church && <div>🏛️ {u.church}</div>}
+                        {u.diocese && <div className="text-xs text-gray-500">📍 {u.diocese}</div>}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

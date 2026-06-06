@@ -74,7 +74,10 @@ export default function XpPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{u.name}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {u.church || u.diocese ? (
-                      <span>{u.church}{u.diocese ? ` • ${u.diocese}` : ''}</span>
+                      <div className="space-y-0.5">
+                        {u.church && <div>🏛️ {u.church}</div>}
+                        {u.diocese && <div className="text-xs text-gray-500">📍 {u.diocese}</div>}
+                      </div>
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
