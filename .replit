@@ -6,7 +6,7 @@ channel = "unstable"
 
 [env]
 NODE_ENV = "production"
-VITE_API_URL = "https://ikigai-app-backend.replit.app/api"
+VITE_API_URL = "https://ikigai-backend.replit.app/api"
 
 [packager]
 language = "nodejs"
