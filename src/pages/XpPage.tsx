@@ -55,6 +55,7 @@ export default function XpPage() {
               <tr>
                 <th className="text-start px-4 py-3 font-medium text-gray-600 w-12">#</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('name')}</th>
+                <th className="text-start px-4 py-3 font-medium text-gray-600">🏛️ {t('church')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('tribe')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('level')}</th>
                 <th className="text-end px-4 py-3 font-medium text-gray-600">{t('conferenceXp')}</th>
@@ -71,6 +72,13 @@ export default function XpPage() {
                 <tr key={u.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => { setHistoryUserId(u.id); setHistoryUserName(u.name); }}>
                   <td className="px-4 py-3 font-bold text-gray-400">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{u.name}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {u.church || u.diocese ? (
+                      <span>{u.church}{u.diocese ? ` • ${u.diocese}` : ''}</span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {u.tribe ? (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: u.tribe.color + '20', color: u.tribe.color }}>{u.tribe.name}</span>
