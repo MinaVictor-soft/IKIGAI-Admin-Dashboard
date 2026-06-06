@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Gift,
-  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Navigation
+  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,11 +18,7 @@ const navItems = [
   { to: '/bonus', icon: Gift, key: 'bonusQr' },
   { to: '/sports', icon: Swords, key: 'sports' },
   { to: '/publications', icon: BookOpen, key: 'publications' },
-];
-
-const superAdminItems = [
-  { to: '/cms', icon: Settings, key: 'CMS Management' },
-  { to: '/nav-config', icon: Navigation, key: 'Navigation Config' },
+  { to: '/settings', icon: Settings, key: 'settings' },
 ];
 
 export default function DashboardLayout() {
@@ -35,9 +31,6 @@ export default function DashboardLayout() {
     logout();
     navigate('/login');
   };
-
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-  const displayItems = isSuperAdmin ? [...navItems, ...superAdminItems] : navItems;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -54,7 +47,7 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {displayItems.map(({ to, icon: Icon, key }) => (
+          {navItems.map(({ to, icon: Icon, key }) => (
             <NavLink
               key={to}
               to={to}

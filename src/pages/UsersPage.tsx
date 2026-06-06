@@ -49,8 +49,7 @@ export default function UsersPage() {
       api.patch(`/admin/users/${userId}/role`, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['user-detail', detailUserId] });
-      toast.success('Role changed');
+      toast.success('Role updated');
     },
     onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
   });
@@ -115,6 +114,7 @@ export default function UsersPage() {
               <tr>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('name')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('email')}</th>
+                <th className="text-start px-4 py-3 font-medium text-gray-600">📱 Phone</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('role')}</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">🏛️ الكنيسة</th>
                 <th className="text-start px-4 py-3 font-medium text-gray-600">{t('tribe')}</th>
@@ -143,13 +143,22 @@ export default function UsersPage() {
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900 cursor-pointer hover:text-indigo-600" onClick={() => setDetailUserId(u.id)}>{u.name}</td>
                     <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                    <td className="px-4 py-3 text-gray-600 text-sm">{u.phone || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        u.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :
-                        u.role === 'ADMIN' ? 'bg-orange-100 text-orange-700' :
-                        u.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>{u.role}</span>
+                      <select 
+                        value={u.role} 
+                        onChange={(e) => changeRole.mutate({ userId: u.id, role: e.target.value })}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border-none cursor-pointer ${
+                          u.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :
+                          u.role === 'ADMIN' ? 'bg-orange-100 text-orange-700' :
+                          u.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                        <option value="ATTENDEE">{t('attendee')}</option>
+                        <option value="STAFF">{t('staff')}</option>
+                        <option value="ADMIN">{t('admin')}</option>
+                        <option value="SUPER_ADMIN">{t('superAdmin')}</option>
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       <div className="space-y-0.5">
@@ -204,7 +213,6 @@ export default function UsersPage() {
       {detailUserId && userDetail && (
         <UserDetailModal
           user={userDetail}
-          currentUserRole={user?.role}
           onClose={() => setDetailUserId(null)}
           onAdjustXp={(amount: number, reason: string) => adjustXp.mutate({ userId: detailUserId, amount, reason })}
           onChangeRole={(role: string) => changeRole.mutate({ userId: detailUserId, role })}
@@ -233,12 +241,12 @@ function CreateUserModal({ tribes, onClose, onSubmit, loading }: any) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-md p-6">
         <h3 className="text-lg font-bold mb-4">{t('createUser')}</h3>
         <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, tribeId: form.tribeId || undefined }); }} className="space-y-3">
           <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={t('name')} required className="w-full px-3 py-2 border rounded-lg text-sm" />
           <input value={form.email} onChange={(e) => set('email', e.target.value)} type="email" placeholder={t('email')} required className="w-full px-3 py-2 border rounded-lg text-sm" />
-          <input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border rounded-lg text-sm" />
+          <input value={form.phone} onChange={(e) => set('phone', e.target.value)} type="tel" placeholder="📱 Phone" className="w-full px-3 py-2 border rounded-lg text-sm" />
           <input value={form.password} onChange={(e) => set('password', e.target.value)} type="password" placeholder={t('password')} required minLength={8} className="w-full px-3 py-2 border rounded-lg text-sm" />
           <select value={form.role} onChange={(e) => set('role', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
             <option value="ATTENDEE">{t('attendee')}</option>
@@ -262,13 +270,11 @@ function CreateUserModal({ tribes, onClose, onSubmit, loading }: any) {
   );
 }
 
-function UserDetailModal({ user, currentUserRole, onClose, onAdjustXp, onChangeRole, adjustLoading, changeRoleLoading }: any) {
+function UserDetailModal({ user, onClose, onAdjustXp, onChangeRole, adjustLoading, changeRoleLoading }: any) {
   const { t } = useLang();
   const [showAdjust, setShowAdjust] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
-  const [showChangeRole, setShowChangeRole] = useState(false);
-  const [newRole, setNewRole] = useState(user.role);
   const [activityTab, setActivityTab] = useState<'info' | 'sessions' | 'quizzes' | 'bonus' | 'sports'>('info');
 
   const { data: activity } = useQuery({
@@ -318,29 +324,29 @@ function UserDetailModal({ user, currentUserRole, onClose, onAdjustXp, onChangeR
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('role')}</p>
-                <div className="flex items-center justify-between gap-2 mt-1">
-                  <p className="font-semibold text-sm">{user.role}</p>
-                  {currentUserRole === 'SUPER_ADMIN' && (
-                    <button
-                      onClick={() => setShowChangeRole(true)}
-                      className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                    >
-                      Change
-                    </button>
-                  )}
-                </div>
+                <select 
+                  value={user.role}
+                  onChange={(e) => onChangeRole(e.target.value)}
+                  disabled={changeRoleLoading}
+                  className={`w-full px-2 py-0.5 rounded text-xs font-semibold border-none cursor-pointer disabled:opacity-50 ${
+                    user.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :
+                    user.role === 'ADMIN' ? 'bg-orange-100 text-orange-700' :
+                    user.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                  <option value="ATTENDEE">{t('attendee')}</option>
+                  <option value="STAFF">{t('staff')}</option>
+                  <option value="ADMIN">{t('admin')}</option>
+                  <option value="SUPER_ADMIN">{t('superAdmin')}</option>
+                </select>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500">📱 Phone</p>
+                <p className="font-semibold text-sm">{user.phone || '—'}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('totalXp')}</p>
                 <p className="font-bold text-lg text-indigo-600">{user.totalXp}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">{t('email')}</p>
-                <p className="font-semibold text-sm text-gray-900">{user.email}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Phone</p>
-                <p className="font-semibold text-sm text-gray-900">{user.phone || '—'}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('conferenceXp')}</p>
@@ -534,45 +540,6 @@ function UserDetailModal({ user, currentUserRole, onClose, onAdjustXp, onChangeR
                 </div>
               ))
             )}
-          </div>
-        )}
-
-        {/* Role Change Modal */}
-        {showChangeRole && (
-          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white rounded-xl p-4" onClick={(e) => e.stopPropagation()}>
-              <h4 className="font-bold mb-3 text-sm">{t('role')}</h4>
-              <select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm mb-3"
-              >
-                <option value="ATTENDEE">{t('attendee')}</option>
-                <option value="STAFF">{t('staff')}</option>
-                <option value="ADMIN">{t('admin')}</option>
-                <option value="SUPER_ADMIN">{t('superAdmin')}</option>
-              </select>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowChangeRole(false)}
-                  className="flex-1 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  onClick={() => {
-                    if (newRole !== user.role) {
-                      onChangeRole(newRole);
-                    }
-                    setShowChangeRole(false);
-                  }}
-                  disabled={changeRoleLoading}
-                  className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                >
-                  {changeRoleLoading ? '...' : t('save')}
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
