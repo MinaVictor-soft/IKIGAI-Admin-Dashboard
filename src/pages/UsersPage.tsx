@@ -44,6 +44,17 @@ export default function UsersPage() {
     onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
   });
 
+  const changeRole = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      api.patch(`/admin/users/${userId}/role`, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-detail', detailUserId] });
+      toast.success('Role changed');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
+  });
+
   const { data: userDetail } = useQuery({
     queryKey: ['user-detail', detailUserId],
     queryFn: () => api.get(`/admin/users/${detailUserId}`).then((r) => r.data),
@@ -193,9 +204,12 @@ export default function UsersPage() {
       {detailUserId && userDetail && (
         <UserDetailModal
           user={userDetail}
+          currentUserRole={user?.role}
           onClose={() => setDetailUserId(null)}
           onAdjustXp={(amount: number, reason: string) => adjustXp.mutate({ userId: detailUserId, amount, reason })}
+          onChangeRole={(role: string) => changeRole.mutate({ userId: detailUserId, role })}
           adjustLoading={adjustXp.isPending}
+          changeRoleLoading={changeRole.isPending}
         />
       )}
 
@@ -214,16 +228,17 @@ export default function UsersPage() {
 
 function CreateUserModal({ tribes, onClose, onSubmit, loading }: any) {
   const { t } = useLang();
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: 'ATTENDEE', church: '', diocese: '', tribeId: '' });
+  const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', role: 'ATTENDEE', church: '', diocese: '', tribeId: '' });
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6">
+      <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold mb-4">{t('createUser')}</h3>
         <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, tribeId: form.tribeId || undefined }); }} className="space-y-3">
           <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={t('name')} required className="w-full px-3 py-2 border rounded-lg text-sm" />
           <input value={form.email} onChange={(e) => set('email', e.target.value)} type="email" placeholder={t('email')} required className="w-full px-3 py-2 border rounded-lg text-sm" />
+          <input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border rounded-lg text-sm" />
           <input value={form.password} onChange={(e) => set('password', e.target.value)} type="password" placeholder={t('password')} required minLength={8} className="w-full px-3 py-2 border rounded-lg text-sm" />
           <select value={form.role} onChange={(e) => set('role', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
             <option value="ATTENDEE">{t('attendee')}</option>
@@ -247,11 +262,13 @@ function CreateUserModal({ tribes, onClose, onSubmit, loading }: any) {
   );
 }
 
-function UserDetailModal({ user, onClose, onAdjustXp, adjustLoading }: any) {
+function UserDetailModal({ user, currentUserRole, onClose, onAdjustXp, onChangeRole, adjustLoading, changeRoleLoading }: any) {
   const { t } = useLang();
   const [showAdjust, setShowAdjust] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+  const [showChangeRole, setShowChangeRole] = useState(false);
+  const [newRole, setNewRole] = useState(user.role);
   const [activityTab, setActivityTab] = useState<'info' | 'sessions' | 'quizzes' | 'bonus' | 'sports'>('info');
 
   const { data: activity } = useQuery({
@@ -301,11 +318,29 @@ function UserDetailModal({ user, onClose, onAdjustXp, adjustLoading }: any) {
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('role')}</p>
-                <p className="font-semibold text-sm">{user.role}</p>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <p className="font-semibold text-sm">{user.role}</p>
+                  {currentUserRole === 'SUPER_ADMIN' && (
+                    <button
+                      onClick={() => setShowChangeRole(true)}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Change
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('totalXp')}</p>
                 <p className="font-bold text-lg text-indigo-600">{user.totalXp}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500">{t('email')}</p>
+                <p className="font-semibold text-sm text-gray-900">{user.email}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500">Phone</p>
+                <p className="font-semibold text-sm text-gray-900">{user.phone || '—'}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500">{t('conferenceXp')}</p>
@@ -499,6 +534,45 @@ function UserDetailModal({ user, onClose, onAdjustXp, adjustLoading }: any) {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* Role Change Modal */}
+        {showChangeRole && (
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-xl p-4" onClick={(e) => e.stopPropagation()}>
+              <h4 className="font-bold mb-3 text-sm">{t('role')}</h4>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm mb-3"
+              >
+                <option value="ATTENDEE">{t('attendee')}</option>
+                <option value="STAFF">{t('staff')}</option>
+                <option value="ADMIN">{t('admin')}</option>
+                <option value="SUPER_ADMIN">{t('superAdmin')}</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowChangeRole(false)}
+                  className="flex-1 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={() => {
+                    if (newRole !== user.role) {
+                      onChangeRole(newRole);
+                    }
+                    setShowChangeRole(false);
+                  }}
+                  disabled={changeRoleLoading}
+                  className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {changeRoleLoading ? '...' : t('save')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -15,6 +15,8 @@ import SportsPage from './pages/SportsPage';
 import TribesPage from './pages/TribesPage';
 import LevelsPage from './pages/LevelsPage';
 import PublicationsPage from './pages/PublicationsPage';
+import CMSPage from './pages/CMSPage';
+import NavConfigPage from './pages/NavConfigPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -47,6 +49,8 @@ export default function App() {
                 <Route path="bonus" element={<BonusPage />} />
                 <Route path="sports" element={<SportsPage />} />
                 <Route path="publications" element={<PublicationsPage />} />
+                <Route path="cms" element={<CMSPage />} />
+                <Route path="nav-config" element={<NavConfigPage />} />
               </Route>
             </Routes>
             <Toaster position="top-right" />
