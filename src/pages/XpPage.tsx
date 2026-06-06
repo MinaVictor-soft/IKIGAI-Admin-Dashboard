@@ -11,13 +11,13 @@ export default function XpPage() {
   const [historyUserId, setHistoryUserId] = useState<string | null>(null);
   const [historyUserName, setHistoryUserName] = useState('');
 
-  const { data: leaderboard } = useQuery({
+  const { data: leaderboard, isLoading: lbLoading, isError: lbError } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: () => api.get('/xp/leaderboard?limit=100').then((r) => r.data),
     refetchInterval: 10000,
   });
 
-  const { data: tribes } = useQuery({
+  const { data: tribes, isLoading: tribesLoading, isError: tribesError } = useQuery({
     queryKey: ['tribe-leaderboard'],
     queryFn: () => api.get('/xp/tribes').then((r) => r.data),
     refetchInterval: 10000,
@@ -63,7 +63,11 @@ export default function XpPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {leaderboard?.map((u: any, i: number) => (
+              {lbLoading ? (
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400">Loading...</td></tr>
+              ) : lbError ? (
+                <tr><td colSpan={7} className="text-center py-8 text-red-400">Failed to load leaderboard. Please check your connection and try again.</td></tr>
+              ) : leaderboard?.map((u: any, i: number) => (
                 <tr key={u.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => { setHistoryUserId(u.id); setHistoryUserName(u.name); }}>
                   <td className="px-4 py-3 font-bold text-gray-400">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{u.name}</td>
@@ -85,7 +89,11 @@ export default function XpPage() {
 
       {tab === 'tribes' && (
         <div className="grid gap-4">
-          {tribes?.map((t: any, i: number) => (
+          {tribesLoading ? (
+            <div className="text-center py-8 text-gray-400">Loading...</div>
+          ) : tribesError ? (
+            <div className="text-center py-8 text-red-400">Failed to load tribe leaderboard. Please check your connection and try again.</div>
+          ) : tribes?.map((t: any, i: number) => (
             <div key={t.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
               <div className="text-2xl font-bold text-gray-300 w-8">{i + 1}</div>
               <div className="w-10 h-10 rounded-full" style={{ backgroundColor: t.color }} />

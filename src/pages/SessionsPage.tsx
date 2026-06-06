@@ -14,7 +14,7 @@ export default function SessionsPage() {
   const [viewAttendanceId, setViewAttendanceId] = useState<string | null>(null);
   const [viewQrSession, setViewQrSession] = useState<any>(null);
 
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions, isLoading, isError } = useQuery({
     queryKey: ['sessions'],
     queryFn: () => api.get('/admin/sessions').then((r) => r.data),
   });
@@ -84,6 +84,8 @@ export default function SessionsPage() {
       <div className="grid gap-4">
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">{t('loading')}</div>
+        ) : isError ? (
+          <div className="text-center py-8 text-red-400">Failed to load sessions. Please check your connection and try again.</div>
         ) : sessions?.length === 0 ? (
           <div className="text-center py-8 text-gray-400">{t('noSessionsYet')}</div>
         ) : (

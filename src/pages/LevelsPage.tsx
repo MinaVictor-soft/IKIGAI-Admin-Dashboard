@@ -11,7 +11,7 @@ export default function LevelsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editLevel, setEditLevel] = useState<any>(null);
 
-  const { data: levels, isLoading } = useQuery({
+  const { data: levels, isLoading, isError } = useQuery({
     queryKey: ['levels'],
     queryFn: () => api.get('/admin/levels').then((r) => r.data),
   });
@@ -79,6 +79,8 @@ export default function LevelsPage() {
 
       {isLoading ? (
         <div className="text-center py-12 text-gray-400">Loading...</div>
+      ) : isError ? (
+        <div className="text-center py-12 text-red-400">Failed to load levels. Please check your connection and try again.</div>
       ) : levels?.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <Medal size={48} className="mx-auto mb-3 opacity-50" />

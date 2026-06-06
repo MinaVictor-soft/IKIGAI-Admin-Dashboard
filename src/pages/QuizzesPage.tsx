@@ -12,7 +12,7 @@ export default function QuizzesPage() {
   const [addQuestionTo, setAddQuestionTo] = useState<any>(null);
   const [detailQuizId, setDetailQuizId] = useState<string | null>(null);
 
-  const { data: quizzes, isLoading } = useQuery({
+  const { data: quizzes, isLoading, isError } = useQuery({
     queryKey: ['admin-quizzes'],
     queryFn: () => api.get('/admin/quizzes').then((r) => r.data),
   });
@@ -67,6 +67,8 @@ export default function QuizzesPage() {
       <div className="grid gap-4">
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">{t('loading')}</div>
+        ) : isError ? (
+          <div className="text-center py-8 text-red-400">Failed to load quizzes. Please check your connection and try again.</div>
         ) : quizzes?.length === 0 ? (
           <div className="text-center py-8 text-gray-400">{t('noQuizzesYet')}</div>
         ) : (

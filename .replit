@@ -1,16 +1,55 @@
 entrypoint = "src/main.tsx"
 run = "npm run dev"
+modules = ["nodejs-20"]
 
 [nix]
 channel = "unstable"
-
-[env]
-NODE_ENV = "production"
-VITE_API_URL = "https://ikigai-backend.replit.app/api"
 
 [packager]
 language = "nodejs"
 
 [[ports]]
-localPort = 5173
-externalPort = 80
+localPort = 5000
+externalPort = 5000
+
+[userenv]
+
+[userenv.shared]
+
+[userenv.development]
+VITE_API_URL = "/api/v1"
+
+[userenv.production]
+VITE_API_URL = "https://ikigai-backend.replit.app/api/v1"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install --include=dev && npm run dev"
+waitForPort = 5000
+
+[agent]
+expertMode = true
+
+[deployment]
+deploymentTarget = "static"
+build = ["bash", "-c", "npm install --include=dev && npm run build"]
+publicDir = "dist"

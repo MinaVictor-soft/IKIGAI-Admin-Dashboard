@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { Plus, UserPlus, Trash2, Eye, Calendar, HelpCircle, Gift } from 'lucide-react';
+import { UserPlus, Trash2, Eye, Calendar, HelpCircle, Gift } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLang } from '../contexts/LangContext';
 
@@ -14,7 +14,7 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, isError } = useQuery({
     queryKey: ['users', roleFilter],
     queryFn: () => api.get('/admin/users', { params: { role: roleFilter || undefined } }).then((r) => r.data),
   });
@@ -116,6 +116,8 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr><td colSpan={9} className="text-center py-8 text-gray-400">{t('loading')}</td></tr>
+              ) : isError ? (
+                <tr><td colSpan={9} className="text-center py-8 text-red-400">Failed to load users. Please check your connection and try again.</td></tr>
               ) : users?.length === 0 ? (
                 <tr><td colSpan={9} className="text-center py-8 text-gray-400">{t('noUsersFound')}</td></tr>
               ) : (

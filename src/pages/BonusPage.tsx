@@ -14,7 +14,7 @@ export default function BonusPage() {
   const [viewClaimsId, setViewClaimsId] = useState<string | null>(null);
   const [viewClaimsLabel, setViewClaimsLabel] = useState('');
 
-  const { data: qrs, isLoading } = useQuery({
+  const { data: qrs, isLoading, isError } = useQuery({
     queryKey: ['bonus-qrs'],
     queryFn: () => api.get('/bonus/my-qrs').then((r) => r.data),
   });
@@ -73,6 +73,8 @@ export default function BonusPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (
           <div className="text-center py-8 text-gray-400 col-span-full">{t('loading')}</div>
+        ) : isError ? (
+          <div className="text-center py-8 text-red-400 col-span-full">Failed to load bonus QRs. Please check your connection and try again.</div>
         ) : qrs?.length === 0 ? (
           <div className="text-center py-8 text-gray-400 col-span-full">{t('noBonusYet')}</div>
         ) : (

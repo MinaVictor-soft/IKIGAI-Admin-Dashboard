@@ -14,17 +14,17 @@ export default function SportsPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
 
-  const { data: teams } = useQuery({
+  const { data: teams, isLoading: teamsLoading, isError: teamsError } = useQuery({
     queryKey: ['sports-teams'],
     queryFn: () => api.get('/sports/teams').then((r) => r.data),
   });
 
-  const { data: matches } = useQuery({
+  const { data: matches, isLoading: matchesLoading, isError: matchesError } = useQuery({
     queryKey: ['sports-matches'],
     queryFn: () => api.get('/sports/matches').then((r) => r.data),
   });
 
-  const { data: standings } = useQuery({
+  const { data: standings, isLoading: standingsLoading, isError: standingsError } = useQuery({
     queryKey: ['sports-standings'],
     queryFn: () => api.get('/sports/standings').then((r) => r.data),
   });
@@ -150,7 +150,11 @@ export default function SportsPage() {
 
       {tab === 'teams' && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {teams?.map((t: any) => (
+          {teamsLoading ? (
+            <div className="col-span-full text-center py-8 text-gray-400">Loading...</div>
+          ) : teamsError ? (
+            <div className="col-span-full text-center py-8 text-red-400">Failed to load teams. Please check your connection and try again.</div>
+          ) : teams?.map((t: any) => (
             <div key={t.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 cursor-pointer hover:border-indigo-200 transition-colors" onClick={() => setSelectedTeamId(t.id)}>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-full" style={{ backgroundColor: t.color || '#6366f1' }} />
@@ -239,7 +243,11 @@ export default function SportsPage() {
 
       {tab === 'matches' && (
         <div className="grid gap-4">
-          {matches?.length === 0 ? (
+          {matchesLoading ? (
+            <div className="text-center py-8 text-gray-400">Loading...</div>
+          ) : matchesError ? (
+            <div className="text-center py-8 text-red-400">Failed to load matches. Please check your connection and try again.</div>
+          ) : matches?.length === 0 ? (
             <div className="text-center py-8 text-gray-400">{t('noMatchesScheduled')}</div>
           ) : matches?.map((m: any) => (
             <div key={m.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -397,7 +405,7 @@ function CreateMatchForm({ teams, onClose, onSubmit, loading }: any) {
   );
 }
 
-function AddPlayerForm({ teamId, users, existingPlayerIds, onSubmit, onClose, loading }: any) {
+function AddPlayerForm({ teamId: _teamId, users, existingPlayerIds, onSubmit, onClose, loading }: any) {
   const [selected, setSelected] = useState<string[]>([]);
   const [position, setPosition] = useState('');
 
