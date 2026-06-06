@@ -302,16 +302,6 @@ function AddQuestionModal({ quiz, onClose, onSubmit, loading }: any) {
     set('options', opts);
   };
 
-  // Get options based on question type
-  const getDisplayOptions = () => {
-    if (form.questionType === 'TRUE_FALSE') {
-      return [{ id: 'true', text: 'True' }, { id: 'false', text: 'False' }];
-    } else if (form.questionType === 'SHORT_ANSWER') {
-      return [];
-    }
-    return form.options.filter(o => o.text);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
