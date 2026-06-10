@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Gift,
-  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings
+  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Flag
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/xp', icon: Trophy, key: 'xpLeaderboard' },
   { to: '/bonus', icon: Gift, key: 'bonusQr' },
   { to: '/sports', icon: Swords, key: 'sports' },
+  { to: '/tournaments', icon: Flag, key: 'tournaments' },
   { to: '/publications', icon: BookOpen, key: 'publications' },
   { to: '/settings', icon: Settings, key: 'settings' },
 ];

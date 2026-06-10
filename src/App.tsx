@@ -12,6 +12,7 @@ import QuizzesPage from './pages/QuizzesPage';
 import XpPage from './pages/XpPage';
 import BonusPage from './pages/BonusPage';
 import SportsPage from './pages/SportsPage';
+import TournamentsPage from './pages/TournamentsPage';
 import TribesPage from './pages/TribesPage';
 import LevelsPage from './pages/LevelsPage';
 import PublicationsPage from './pages/PublicationsPage';
@@ -46,8 +47,7 @@ export default function App() {
                 <Route path="quizzes" element={<QuizzesPage />} />
                 <Route path="xp" element={<XpPage />} />
                 <Route path="bonus" element={<BonusPage />} />
-                <Route path="sports" element={<SportsPage />} />
-                <Route path="publications" element={<PublicationsPage />} />
+                <Route path="sports" element={<SportsPage />} />              <Route path="tournaments" element={<TournamentsPage />} />                <Route path="publications" element={<PublicationsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>
