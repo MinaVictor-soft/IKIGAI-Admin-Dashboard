@@ -95,7 +95,12 @@ export default function QuizzesPage() {
                     <PlusCircle size={16} />
                   </button>
                   {q.status === 'DRAFT' && (
-                    <button onClick={() => updateStatus.mutate({ id: q.id, status: 'ACTIVE' })} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title={t('activate')}>
+                    <button 
+                      onClick={() => updateStatus.mutate({ id: q.id, status: 'ACTIVE' })} 
+                      disabled={(q._count?.questions ?? q.questionCount ?? 0) === 0}
+                      className={`p-2 rounded-lg transition-colors ${(q._count?.questions ?? q.questionCount ?? 0) === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-green-600 hover:bg-green-50'}`}
+                      title={(q._count?.questions ?? q.questionCount ?? 0) === 0 ? 'Add questions before publishing' : t('activate')}
+                    >
                       <Play size={16} />
                     </button>
                   )}
