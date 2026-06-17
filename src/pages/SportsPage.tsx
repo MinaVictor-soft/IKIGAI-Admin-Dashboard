@@ -1,18 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Trophy, Users, UserPlus, X, Zap } from 'lucide-react';
+import { Plus, Trophy, Users, UserPlus, X, Zap, Eye, ExternalLink, Edit2, Check } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
+import TournamentsTab from '../components/TournamentsTab';
 
 export default function SportsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { t } = useLang();
-  const [tab, setTab] = useState<'teams' | 'matches' | 'standings'>('teams');
+  
+  // Initialize tab from localStorage or default to 'teams'
+  const [tab, setTab] = useState<'teams' | 'matches' | 'standings' | 'tournaments'>(() => {
+    const savedTab = localStorage.getItem('sportsPageTab');
+    return (savedTab as 'teams' | 'matches' | 'standings' | 'tournaments') || 'teams';
+  });
+
+  // Save tab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('sportsPageTab', tab);
+  }, [tab]);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editTeamForm, setEditTeamForm] = useState({ name: '', color: '#6366f1' });
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [selectedMatchTournament, setSelectedMatchTournament] = useState<any>(null);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({ matchTime: '', matchPlace: '' });
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showDeleteTeamsDialog, setShowDeleteTeamsDialog] = useState(false);
+  const [showDeleteMatchesDialog, setShowDeleteMatchesDialog] = useState(false);
+  const [showDeleteTournamentsDialog, setShowDeleteTournamentsDialog] = useState(false);
 
   const { data: teams, isLoading: teamsLoading, isError: teamsError } = useQuery({
     queryKey: ['sports-teams'],
@@ -33,6 +56,11 @@ export default function SportsPage() {
     queryKey: ['sports-team', selectedTeamId],
     queryFn: () => api.get(`/sports/teams/${selectedTeamId}`).then((r) => r.data),
     enabled: !!selectedTeamId,
+  });
+
+  const { data: tournaments } = useQuery({
+    queryKey: ['tournaments-all'],
+    queryFn: () => api.get('/tournaments').then((r) => r.data),
   });
 
   const createTeam = useMutation({
@@ -98,6 +126,17 @@ export default function SportsPage() {
     onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
   });
 
+  const updateTournamentMatch = useMutation({
+    mutationFn: ({ tournamentId, matchId, data }: { tournamentId: string; matchId: string; data: any }) =>
+      api.patch(`/tournaments/${tournamentId}/match/${matchId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournaments-all'] });
+      toast.success('Match updated successfully');
+      setEditingMatchId(null);
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed to update match'),
+  });
+
   const addEvent = useMutation({
     mutationFn: ({ matchId, data }: { matchId: string; data: any }) =>
       api.post(`/sports/matches/${matchId}/events`, data),
@@ -106,6 +145,70 @@ export default function SportsPage() {
       toast.success('Event recorded');
     },
     onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
+  });
+
+  const updateTeam = useMutation({
+    mutationFn: ({ teamId, data }: { teamId: string; data: any }) =>
+      api.patch(`/sports/teams/${teamId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports-teams'] });
+      queryClient.invalidateQueries({ queryKey: ['sports-team', selectedTeamId] });
+      toast.success('Team updated');
+      setEditingTeamId(null);
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
+  });
+
+  const deleteTeam = useMutation({
+    mutationFn: (teamId: string) => api.delete(`/sports/teams/${teamId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports-teams'] });
+      setSelectedTeamId(null);
+      toast.success('Team deleted');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed'),
+  });
+
+  const resetAllData = useMutation({
+    mutationFn: () => api.post(`/sports/reset-all`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports-teams'] });
+      queryClient.invalidateQueries({ queryKey: ['sports-matches'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments-all'] });
+      queryClient.invalidateQueries({ queryKey: ['sports-standings'] });
+      setShowResetDialog(false);
+      toast.success('All data cleared');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed to reset'),
+  });
+
+  const deleteAllTeams = useMutation({
+    mutationFn: () => api.post(`/sports/teams/delete-all`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports-teams'] });
+      queryClient.invalidateQueries({ queryKey: ['sports-standings'] });
+      toast.success('All teams deleted');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed to delete teams'),
+  });
+
+  const deleteAllMatches = useMutation({
+    mutationFn: () => api.post(`/sports/matches/delete-all`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports-matches'] });
+      queryClient.invalidateQueries({ queryKey: ['sports-standings'] });
+      toast.success('All matches deleted');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed to delete matches'),
+  });
+
+  const deleteAllTournaments = useMutation({
+    mutationFn: () => api.post(`/tournaments/delete-all`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournaments-all'] });
+      toast.success('All tournaments deleted');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || 'Failed to delete tournaments'),
   });
 
   const { data: allUsers } = useQuery({
@@ -125,14 +228,6 @@ export default function SportsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">{t('sports')}</h2>
-        <div className="flex gap-2">
-          <button onClick={() => setShowCreateTeam(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
-            <Plus size={16} /> {t('createTeam')}
-          </button>
-          <button onClick={() => setShowCreateMatch(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
-            <Plus size={16} /> {t('scheduleMatch')}
-          </button>
-        </div>
       </div>
 
       {/* Tabs */}
@@ -146,26 +241,87 @@ export default function SportsPage() {
         <button onClick={() => setTab('standings')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'standings' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>
           <Trophy size={16} /> {t('standings')}
         </button>
+        <button onClick={() => setTab('tournaments')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'tournaments' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>
+          <Trophy size={16} /> {t('tournaments')}
+        </button>
       </div>
 
       {tab === 'teams' && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {teamsLoading ? (
-            <div className="col-span-full text-center py-8 text-gray-400">Loading...</div>
-          ) : teamsError ? (
-            <div className="col-span-full text-center py-8 text-red-400">Failed to load teams. Please check your connection and try again.</div>
-          ) : teams?.map((t: any) => (
-            <div key={t.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 cursor-pointer hover:border-indigo-200 transition-colors" onClick={() => setSelectedTeamId(t.id)}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full" style={{ backgroundColor: t.color || '#6366f1' }} />
-                <h3 className="font-semibold text-gray-900">{t.name}</h3>
+        <div className="space-y-4">
+          <button onClick={() => setShowCreateTeam(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+            <Plus size={16} /> {t('createTeam')}
+          </button>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {teamsLoading ? (
+              <div className="col-span-full text-center py-8 text-gray-400">Loading...</div>
+            ) : teamsError ? (
+              <div className="col-span-full text-center py-8 text-red-400">Failed to load teams. Please check your connection and try again.</div>
+            ) : teams?.map((t: any) => (
+              <div key={t.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:border-indigo-200 transition-colors">
+                <div onClick={() => setSelectedTeamId(t.id)} className="cursor-pointer mb-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full" style={{ backgroundColor: t.color || '#6366f1' }} />
+                    <h3 className="font-semibold text-gray-900">{t.name}</h3>
+                  </div>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>Players: {t._count?.players ?? t.players?.length ?? 0}/{t.maxRosterSize}</p>
+                    <p>W{t.wins} D{t.draws} L{t.losses} • Pts: {t.points}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-3 border-t">
+                  <button
+                    onClick={() => {
+                      setEditingTeamId(t.id);
+                      setEditTeamForm({ name: t.name, color: t.color });
+                    }}
+                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:bg-blue-200"
+                  >
+                    <Edit2 size={14} /> Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Delete team "${t.name}"?`)) {
+                        deleteTeam.mutate(t.id);
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <div className="text-sm text-gray-500 space-y-1">
-                <p>Players: {t._count?.players ?? t.players?.length ?? 0}/{t.maxRosterSize}</p>
-                <p>W{t.wins} D{t.draws} L{t.losses} • Pts: {t.points}</p>
-              </div>
+            ))}
+          </div>
+          
+          {/* Delete Buttons */}
+          <div className="pt-4 border-t space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setShowDeleteTeamsDialog(true)}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 flex items-center justify-center gap-1"
+              >
+                🗑️ Delete Teams
+              </button>
+              <button
+                onClick={() => setShowDeleteMatchesDialog(true)}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 flex items-center justify-center gap-1"
+              >
+                🗑️ Delete Matches
+              </button>
+              <button
+                onClick={() => setShowDeleteTournamentsDialog(true)}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 flex items-center justify-center gap-1"
+              >
+                🗑️ Delete Tournaments
+              </button>
             </div>
-          ))}
+            <button
+              onClick={() => setShowResetDialog(true)}
+              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 flex items-center justify-center gap-2"
+            >
+              🗑️ Reset All Data
+            </button>
+          </div>
         </div>
       )}
 
@@ -242,56 +398,193 @@ export default function SportsPage() {
       )}
 
       {tab === 'matches' && (
-        <div className="grid gap-4">
+        <div className="space-y-4">
+          <button onClick={() => setShowCreateMatch(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+            <Plus size={16} /> {t('scheduleMatch')}
+          </button>
           {matchesLoading ? (
             <div className="text-center py-8 text-gray-400">Loading...</div>
           ) : matchesError ? (
-            <div className="text-center py-8 text-red-400">Failed to load matches. Please check your connection and try again.</div>
-          ) : matches?.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">{t('noMatchesScheduled')}</div>
-          ) : matches?.map((m: any) => (
-            <div key={m.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-gray-900">{m.homeTeam?.name ?? 'Home'}</span>
-                  <span className="text-gray-400">{t('vs')}</span>
-                  <span className="font-semibold text-gray-900">{m.awayTeam?.name ?? 'Away'}</span>
+            <div className="text-center py-8 text-red-400">Failed to load matches</div>
+          ) : (
+            <>
+              {/* Tournament Matches */}
+              {tournaments && tournaments.length > 0 && (
+                <div className="space-y-4 mb-8">
+                  <h3 className="text-lg font-bold text-gray-900">🏆 Tournament Matches</h3>
+                  {tournaments.map((tournament: any) =>
+                    tournament.tournamentMatches?.map((m: any) => (
+                      <div 
+                        key={m.id} 
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 shadow-sm border border-blue-200"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="flex-shrink-0 bg-blue-100 px-3 py-1 rounded-lg">
+                              <span className="text-xs font-bold text-blue-700">{tournament.name}</span>
+                            </div>
+                            <span className="font-semibold text-gray-900">{m.team1?.name ?? 'Home'}</span>
+                            <span className="text-gray-400">vs</span>
+                            <span className="font-semibold text-gray-900">{m.team2?.name ?? 'Away'}</span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[m.status]}`}>
+                            {m.status}
+                          </span>
+                        </div>
+
+                        {/* Match Info - Editable */}
+                        {editingMatchId === m.id ? (
+                          <div className="bg-white rounded-lg p-4 mb-3 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-gray-600 font-semibold">Date & Time</label>
+                                <input 
+                                  type="datetime-local" 
+                                  value={editFormData.matchTime}
+                                  onChange={(e) => setEditFormData(prev => ({ ...prev, matchTime: e.target.value }))}
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-600 font-semibold">Venue/Place</label>
+                                <input 
+                                  type="text" 
+                                  value={editFormData.matchPlace}
+                                  onChange={(e) => setEditFormData(prev => ({ ...prev, matchPlace: e.target.value }))}
+                                  placeholder="e.g., Wembley Stadium"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  updateTournamentMatch.mutate({
+                                    tournamentId: tournament.id,
+                                    matchId: m.id,
+                                    data: {
+                                      matchTime: editFormData.matchTime ? new Date(editFormData.matchTime).toISOString() : undefined,
+                                      matchPlace: editFormData.matchPlace,
+                                    }
+                                  });
+                                }}
+                                disabled={updateTournamentMatch.isPending}
+                                className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                <Check size={14} /> Save
+                              </button>
+                              <button
+                                onClick={() => setEditingMatchId(null)}
+                                className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-sm text-gray-600 mb-2 flex items-center justify-between">
+                              <span>
+                                {m.matchTime ? new Date(m.matchTime).toLocaleString() : 'Time not set'} 
+                                {m.matchPlace && ` • ${m.matchPlace}`}
+                              </span>
+                              {m.status === 'COMPLETED' && (
+                                <span className="font-bold text-gray-900">Score: {m.team1Goals}-{m.team2Goals}</span>
+                              )}
+                            </div>
+                            <div className="flex gap-2 mt-3">
+                              {m.status === 'SCHEDULED' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingMatchId(m.id);
+                                    setEditFormData({
+                                      matchTime: m.matchTime ? new Date(m.matchTime).toISOString().slice(0, 16) : '',
+                                      matchPlace: m.matchPlace || ''
+                                    });
+                                  }}
+                                  className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium flex items-center gap-1"
+                                >
+                                  <Edit2 size={12} /> Edit
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => {
+                                  setSelectedMatch(m);
+                                  setSelectedMatchTournament(tournament);
+                                }}
+                                className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium flex items-center gap-1"
+                              >
+                                <Eye size={12} /> Details
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[m.status]}`}>{m.status}</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                {m.venue && `${m.venue} • `}{new Date(m.scheduledAt).toLocaleString()}
-                {m.status === 'COMPLETED' && ` • ${t('score')}: ${m.homeScore}-${m.awayScore}`}
-              </p>
-              <div className="flex gap-2 mt-3">
-                {m.status === 'SCHEDULED' && (
-                  <button onClick={() => startMatch.mutate(m.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium">Start</button>
-                )}
-                {m.status === 'LIVE' && (
-                  <>
-                    <button onClick={() => {
-                      const hs = prompt(t('homeScore') + ':');
-                      const as2 = prompt(t('awayScore') + ':');
-                      if (hs !== null && as2 !== null) completeMatch.mutate({ id: m.id, homeScore: Number(hs), awayScore: Number(as2) });
-                    }} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Complete</button>
-                    <button onClick={() => {
-                      const eventType = prompt('Event type (GOAL, ASSIST, YELLOW_CARD, RED_CARD, SUBSTITUTION):');
-                      if (!eventType) return;
-                      const playerId = prompt('Player ID (UUID):');
-                      if (!playerId) return;
-                      const teamId = prompt('Team ID (home or away UUID):');
-                      if (!teamId) return;
-                      const minute = prompt('Minute:');
-                      if (!minute) return;
-                      addEvent.mutate({ matchId: m.id, data: { eventType, playerId, teamId, minute: Number(minute) } });
-                    }} className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-medium flex items-center gap-1">
-                      <Zap size={12} /> Event
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+              )}
+
+              {/* Regular Sports Matches */}
+              {matches && matches.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900">⚽ Regular Matches</h3>
+                  {matches.map((m: any) => (
+                    <div 
+                      key={m.id} 
+                      className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-gray-900">{m.homeTeam?.name ?? 'Home'}</span>
+                          <span className="text-gray-400">vs</span>
+                          <span className="font-semibold text-gray-900">{m.awayTeam?.name ?? 'Away'}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[m.status]}`}>
+                          {m.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {m.venue && `${m.venue} • `}{new Date(m.scheduledAt).toLocaleString()}
+                        {m.status === 'COMPLETED' && ` • Score: ${m.homeScore}-${m.awayScore}`}
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        {m.status === 'SCHEDULED' && (
+                          <button onClick={() => startMatch.mutate(m.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium">Start</button>
+                        )}
+                        {m.status === 'LIVE' && (
+                          <>
+                            <button onClick={() => {
+                              const hs = prompt('Home Score:');
+                              const as2 = prompt('Away Score:');
+                              if (hs !== null && as2 !== null) completeMatch.mutate({ id: m.id, homeScore: Number(hs), awayScore: Number(as2) });
+                            }} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Complete</button>
+                            <button onClick={() => {
+                              const eventType = prompt('Event type (GOAL, ASSIST, YELLOW_CARD, RED_CARD, SUBSTITUTION):');
+                              if (!eventType) return;
+                              const playerId = prompt('Player ID:');
+                              if (!playerId) return;
+                              const teamId = prompt('Team ID:');
+                              if (!teamId) return;
+                              const minute = prompt('Minute:');
+                              if (!minute) return;
+                              addEvent.mutate({ matchId: m.id, data: { eventType, playerId, teamId, minute: Number(minute) } });
+                            }} className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-medium flex items-center gap-1">
+                              <Zap size={12} /> Event
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(!matches || matches.length === 0) && (!tournaments || tournaments.length === 0) && (
+                <div className="text-center py-8 text-gray-400">{t('noMatchesScheduled')}</div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -332,6 +625,8 @@ export default function SportsPage() {
         </div>
       )}
 
+      {tab === 'tournaments' && <TournamentsTab />}
+
       {showCreateTeam && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
@@ -345,6 +640,272 @@ export default function SportsPage() {
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <h3 className="text-lg font-bold mb-4">{t('scheduleMatch')}</h3>
             <CreateMatchForm teams={teams || []} onClose={() => setShowCreateMatch(false)} onSubmit={(d) => createMatch.mutate(d)} loading={createMatch.isPending} />
+          </div>
+        </div>
+      )}
+
+      {/* Match Details Modal */}
+      {/* Edit Team Modal */}
+      {editingTeamId && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEditingTeamId(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold mb-4">Edit Team</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Team Name</label>
+                <input
+                  type="text"
+                  value={editTeamForm.name}
+                  onChange={(e) => setEditTeamForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="Team name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Team Color</label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={editTeamForm.color}
+                    onChange={(e) => setEditTeamForm(prev => ({ ...prev, color: e.target.value }))}
+                    className="w-16 h-10 border rounded-lg cursor-pointer"
+                  />
+                  <div
+                    className="w-10 h-10 rounded-lg border-2 border-gray-300"
+                    style={{ backgroundColor: editTeamForm.color }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => updateTeam.mutate({ teamId: editingTeamId, data: editTeamForm })}
+                  disabled={updateTeam.isPending}
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {updateTeam.isPending ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditingTeamId(null)}
+                  className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset All Data Confirmation Dialog */}
+      {showResetDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowResetDialog(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-red-600 mb-2">⚠️ Reset All Data?</h3>
+            <p className="text-gray-600 mb-4">This will permanently delete:</p>
+            <ul className="list-disc list-inside text-sm text-gray-600 mb-6 space-y-1">
+              <li>All teams</li>
+              <li>All matches</li>
+              <li>All tournaments</li>
+              <li>All match results</li>
+            </ul>
+            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => resetAllData.mutate()}
+                disabled={resetAllData.isPending}
+                className="flex-1 py-2 bg-red-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-red-700"
+              >
+                {resetAllData.isPending ? 'Clearing...' : 'Reset All'}
+              </button>
+              <button
+                onClick={() => setShowResetDialog(false)}
+                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Teams Confirmation Dialog */}
+      {showDeleteTeamsDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteTeamsDialog(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Teams?</h3>
+            <p className="text-gray-600 mb-4">This will permanently delete all teams and remove players from teams.</p>
+            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { deleteAllTeams.mutate(); setShowDeleteTeamsDialog(false); }}
+                disabled={deleteAllTeams.isPending}
+                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
+              >
+                {deleteAllTeams.isPending ? 'Deleting...' : 'Delete Teams'}
+              </button>
+              <button
+                onClick={() => setShowDeleteTeamsDialog(false)}
+                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Matches Confirmation Dialog */}
+      {showDeleteMatchesDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteMatchesDialog(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Matches?</h3>
+            <p className="text-gray-600 mb-4">This will permanently delete all matches and match results.</p>
+            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { deleteAllMatches.mutate(); setShowDeleteMatchesDialog(false); }}
+                disabled={deleteAllMatches.isPending}
+                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
+              >
+                {deleteAllMatches.isPending ? 'Deleting...' : 'Delete Matches'}
+              </button>
+              <button
+                onClick={() => setShowDeleteMatchesDialog(false)}
+                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Tournaments Confirmation Dialog */}
+      {showDeleteTournamentsDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteTournamentsDialog(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Tournaments?</h3>
+            <p className="text-gray-600 mb-4">This will permanently delete all tournaments, matches, and results.</p>
+            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { deleteAllTournaments.mutate(); setShowDeleteTournamentsDialog(false); }}
+                disabled={deleteAllTournaments.isPending}
+                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
+              >
+                {deleteAllTournaments.isPending ? 'Deleting...' : 'Delete Tournaments'}
+              </button>
+              <button
+                onClick={() => setShowDeleteTournamentsDialog(false)}
+                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedMatch && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setSelectedMatch(null); setSelectedMatchTournament(null); }}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">{t('matchDetails')}</h3>
+              <button onClick={() => { setSelectedMatch(null); setSelectedMatchTournament(null); }} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Match Score */}
+            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-center flex-1">
+                  <p className="text-sm text-gray-600 mb-2 font-semibold">{selectedMatch.homeTeam?.name}</p>
+                  <p className="text-4xl font-bold text-gray-900">{selectedMatch.homeScore ?? '-'}</p>
+                </div>
+                <div className="px-6 text-center">
+                  <p className="text-sm font-semibold text-gray-500 mb-2">VS</p>
+                  <p className={`text-xs px-3 py-1 rounded-full font-semibold inline-block ${statusColors[selectedMatch.status]}`}>
+                    {selectedMatch.status}
+                  </p>
+                </div>
+                <div className="text-center flex-1">
+                  <p className="text-sm text-gray-600 mb-2 font-semibold">{selectedMatch.awayTeam?.name}</p>
+                  <p className="text-4xl font-bold text-gray-900">{selectedMatch.awayScore ?? '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Match Details Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Date & Time</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {selectedMatch.matchTime 
+                    ? new Date(selectedMatch.matchTime).toLocaleString() 
+                    : selectedMatch.scheduledAt 
+                      ? new Date(selectedMatch.scheduledAt).toLocaleString()
+                      : 'Not set'}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Venue</p>
+                <p className="text-sm font-medium text-gray-900">{selectedMatch.matchPlace || selectedMatch.venue || 'N/A'}</p>
+              </div>
+              {selectedMatch.winXp && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Win XP</p>
+                  <p className="text-sm font-bold text-green-600">+{selectedMatch.winXp} XP</p>
+                </div>
+              )}
+              {selectedMatch.drawXp && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Draw XP</p>
+                  <p className="text-sm font-bold text-yellow-600">+{selectedMatch.drawXp} XP</p>
+                </div>
+              )}
+            </div>
+
+            {/* Tournament Context */}
+            {selectedMatchTournament && (
+              <div className="border-t pt-6 mb-6 space-y-4">
+                <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Trophy size={18} className="text-yellow-600" />
+                  {selectedMatchTournament.name} - {selectedMatch.stage}
+                </h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs text-gray-600">Tournament Status</p>
+                    <p className="text-sm font-bold text-blue-700">{selectedMatchTournament.status}</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                    <p className="text-xs text-gray-600">Groups</p>
+                    <p className="text-sm font-bold text-purple-700">{selectedMatchTournament.numberOfGroups}</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                    <p className="text-xs text-gray-600">Total Matches</p>
+                    <p className="text-sm font-bold text-green-700">{selectedMatchTournament.tournamentMatches?.length || 0}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    navigate(`/tournament/${selectedMatchTournament.id}`);
+                    setSelectedMatch(null);
+                    setSelectedMatchTournament(null);
+                  }}
+                  className="w-full py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition"
+                >
+                  <ExternalLink size={16} />
+                  View Full Tournament Details
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-4 border-t">
+              <button onClick={() => { setSelectedMatch(null); setSelectedMatchTournament(null); }} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium">
+                {t('close')}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,6 +17,7 @@ import TribesPage from './pages/TribesPage';
 import LevelsPage from './pages/LevelsPage';
 import PublicationsPage from './pages/PublicationsPage';
 import SettingsPage from './pages/SettingsPage';
+import TournamentDetailsPage from './pages/TournamentDetailsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -47,7 +48,10 @@ export default function App() {
                 <Route path="quizzes" element={<QuizzesPage />} />
                 <Route path="xp" element={<XpPage />} />
                 <Route path="bonus" element={<BonusPage />} />
-                <Route path="sports" element={<SportsPage />} />              <Route path="tournaments" element={<TournamentsPage />} />                <Route path="publications" element={<PublicationsPage />} />
+                <Route path="sports" element={<SportsPage />} />
+                <Route path="tournaments" element={<TournamentsPage />} />
+                <Route path="tournament/:id" element={<TournamentDetailsPage />} />
+                <Route path="publications" element={<PublicationsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>
