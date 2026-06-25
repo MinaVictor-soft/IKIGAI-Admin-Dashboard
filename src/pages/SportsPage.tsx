@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { Plus, Trophy, Users, UserPlus, X, Zap, Eye, ExternalLink, Edit2, Check } from 'lucide-react';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 import { useLang } from '../contexts/LangContext';
 import TournamentsTab from '../components/TournamentsTab';
 
@@ -35,7 +36,7 @@ export default function SportsPage() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteTeamsDialog, setShowDeleteTeamsDialog] = useState(false);
   const [showDeleteMatchesDialog, setShowDeleteMatchesDialog] = useState(false);
-  const [showDeleteTournamentsDialog, setShowDeleteTournamentsDialog] = useState(false);
+  const [deleteTeamTarget, setDeleteTeamTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: teams, isLoading: teamsLoading, isError: teamsError } = useQuery({
     queryKey: ['sports-teams'],
@@ -279,11 +280,7 @@ export default function SportsPage() {
                     <Edit2 size={14} /> Edit
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Delete team "${t.name}"?`)) {
-                        deleteTeam.mutate(t.id);
-                      }
-                    }}
+                    onClick={() => setDeleteTeamTarget({ id: t.id, name: t.name })}
                     className="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200"
                   >
                     Delete
@@ -698,112 +695,53 @@ export default function SportsPage() {
 
       {/* Reset All Data Confirmation Dialog */}
       {showResetDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowResetDialog(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-red-600 mb-2">⚠️ Reset All Data?</h3>
-            <p className="text-gray-600 mb-4">This will permanently delete:</p>
-            <ul className="list-disc list-inside text-sm text-gray-600 mb-6 space-y-1">
-              <li>All teams</li>
-              <li>All matches</li>
-              <li>All tournaments</li>
-              <li>All match results</li>
-            </ul>
-            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => resetAllData.mutate()}
-                disabled={resetAllData.isPending}
-                className="flex-1 py-2 bg-red-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-red-700"
-              >
-                {resetAllData.isPending ? 'Clearing...' : 'Reset All'}
-              </button>
-              <button
-                onClick={() => setShowResetDialog(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <PasswordConfirmModal
+          title="Reset All Sports Data?"
+          description="This will permanently delete all teams, matches, tournaments, and match results."
+          confirmLabel={resetAllData.isPending ? 'Clearing...' : 'Reset All Data'}
+          loading={resetAllData.isPending}
+          onConfirm={() => resetAllData.mutate()}
+          onClose={() => setShowResetDialog(false)}
+        />
       )}
 
       {/* Delete Teams Confirmation Dialog */}
       {showDeleteTeamsDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteTeamsDialog(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Teams?</h3>
-            <p className="text-gray-600 mb-4">This will permanently delete all teams and remove players from teams.</p>
-            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { deleteAllTeams.mutate(); setShowDeleteTeamsDialog(false); }}
-                disabled={deleteAllTeams.isPending}
-                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
-              >
-                {deleteAllTeams.isPending ? 'Deleting...' : 'Delete Teams'}
-              </button>
-              <button
-                onClick={() => setShowDeleteTeamsDialog(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <PasswordConfirmModal
+          title="Delete All Teams?"
+          description="This will permanently delete all teams and remove all players from teams."
+          confirmLabel={deleteAllTeams.isPending ? 'Deleting...' : 'Delete All Teams'}
+          loading={deleteAllTeams.isPending}
+          onConfirm={() => { deleteAllTeams.mutate(); setShowDeleteTeamsDialog(false); }}
+          onClose={() => setShowDeleteTeamsDialog(false)}
+          danger={false}
+        />
       )}
 
       {/* Delete Matches Confirmation Dialog */}
       {showDeleteMatchesDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteMatchesDialog(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Matches?</h3>
-            <p className="text-gray-600 mb-4">This will permanently delete all matches and match results.</p>
-            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { deleteAllMatches.mutate(); setShowDeleteMatchesDialog(false); }}
-                disabled={deleteAllMatches.isPending}
-                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
-              >
-                {deleteAllMatches.isPending ? 'Deleting...' : 'Delete Matches'}
-              </button>
-              <button
-                onClick={() => setShowDeleteMatchesDialog(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <PasswordConfirmModal
+          title="Delete All Matches?"
+          description="This will permanently delete all regular matches and match results."
+          confirmLabel={deleteAllMatches.isPending ? 'Deleting...' : 'Delete All Matches'}
+          loading={deleteAllMatches.isPending}
+          onConfirm={() => { deleteAllMatches.mutate(); setShowDeleteMatchesDialog(false); }}
+          onClose={() => setShowDeleteMatchesDialog(false)}
+          danger={false}
+        />
       )}
 
       {/* Delete Tournaments Confirmation Dialog */}
       {showDeleteTournamentsDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteTournamentsDialog(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-orange-600 mb-2">⚠️ Delete All Tournaments?</h3>
-            <p className="text-gray-600 mb-4">This will permanently delete all tournaments, matches, and results.</p>
-            <p className="text-sm text-gray-500 mb-6 font-semibold">This action cannot be undone.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { deleteAllTournaments.mutate(); setShowDeleteTournamentsDialog(false); }}
-                disabled={deleteAllTournaments.isPending}
-                className="flex-1 py-2 bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-orange-700"
-              >
-                {deleteAllTournaments.isPending ? 'Deleting...' : 'Delete Tournaments'}
-              </button>
-              <button
-                onClick={() => setShowDeleteTournamentsDialog(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <PasswordConfirmModal
+          title="Delete All Tournaments?"
+          description="This will permanently delete all tournaments, tournament matches, and results."
+          confirmLabel={deleteAllTournaments.isPending ? 'Deleting...' : 'Delete All Tournaments'}
+          loading={deleteAllTournaments.isPending}
+          onConfirm={() => { deleteAllTournaments.mutate(); setShowDeleteTournamentsDialog(false); }}
+          onClose={() => setShowDeleteTournamentsDialog(false)}
+          danger={false}
+        />
       )}
 
       {selectedMatch && (
@@ -909,11 +847,21 @@ export default function SportsPage() {
           </div>
         </div>
       )}
+      {/* Individual Team Delete */}
+      {deleteTeamTarget && (
+        <PasswordConfirmModal
+          title={`Delete Team "${deleteTeamTarget.name}"?`}
+          description="This will permanently delete this team and remove all its players."
+          confirmLabel={deleteTeam.isPending ? 'Deleting...' : 'Delete Team'}
+          loading={deleteTeam.isPending}
+          onConfirm={() => { deleteTeam.mutate(deleteTeamTarget.id); setDeleteTeamTarget(null); }}
+          onClose={() => setDeleteTeamTarget(null)}
+          danger={false}
+        />
+      )}
     </div>
   );
-}
-
-function CreateTeamForm({ onClose, onSubmit, loading }: any) {
+}({ onClose, onSubmit, loading }: any) {
   const { t } = useLang();
   const [form, setForm] = useState({ name: '', color: '#6366f1', maxRosterSize: 15 });
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
