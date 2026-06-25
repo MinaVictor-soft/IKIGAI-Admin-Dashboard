@@ -109,6 +109,11 @@ export default function QuizzesPage() {
                       <Square size={16} />
                     </button>
                   )}
+                  {q.status === 'CLOSED' && (
+                    <button onClick={() => updateStatus.mutate({ id: q.id, status: 'ACTIVE' })} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Re-enable quiz">
+                      <Play size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

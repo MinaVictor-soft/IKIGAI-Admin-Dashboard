@@ -244,10 +244,10 @@ export default function PublicationsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => updateMutation.mutate({ id: pub.id, data: { published: !pub.published } })}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${pub.published ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}
                         title={pub.published ? 'Unpublish' : 'Publish'}
                       >
-                        {pub.published ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {pub.published ? <><EyeOff size={14} /> {lang === 'ar' ? 'إيقاف' : 'Unpublish'}</> : <><Eye size={14} /> {lang === 'ar' ? 'نشر' : 'Publish'}</>}
                       </button>
                       <button
                         onClick={() => setEditItem(pub)}

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { UserPlus, Trash2, Eye, Calendar, HelpCircle, Gift } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -13,6 +14,9 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+
+  const [showDeleteAttendees, setShowDeleteAttendees] = useState(false);
+  const [deletingAttendees, setDeletingAttendees] = useState(false);
 
   const { data: users, isLoading, isError } = useQuery({
     queryKey: ['users', roleFilter],
@@ -76,11 +80,7 @@ export default function UsersPage() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">{t('users')}</h2>
         <div className="flex gap-2">
-          <button onClick={() => {
-            if (confirm(t('confirmDeleteAttendees'))) {
-              api.delete('/admin/users/attendees').then(() => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success('All attendees removed'); }).catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'));
-            }
-          }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
+          <button onClick={() => setShowDeleteAttendees(true)} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
             <Trash2 size={16} /> {t('removeAttendees')}
           </button>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
@@ -228,6 +228,28 @@ export default function UsersPage() {
           onClose={() => setShowCreate(false)}
           onSubmit={(data: any) => createUser.mutate(data)}
           loading={createUser.isPending}
+        />
+      )}
+
+      {showDeleteAttendees && (
+        <PasswordConfirmModal
+          title="Delete All Attendees"
+          description="This will permanently delete all attendee accounts. Admin, Super Admin and Staff accounts will not be affected."
+          confirmLabel="Delete All Attendees"
+          loading={deletingAttendees}
+          danger
+          onClose={() => setShowDeleteAttendees(false)}
+          onConfirm={() => {
+            setDeletingAttendees(true);
+            api.delete('/admin/users/attendees')
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: ['users'] });
+                toast.success('All attendees removed');
+                setShowDeleteAttendees(false);
+              })
+              .catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'))
+              .finally(() => setDeletingAttendees(false));
+          }}
         />
       )}
     </div>
