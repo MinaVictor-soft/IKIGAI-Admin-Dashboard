@@ -4,6 +4,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { Plus, Play, Square, PlusCircle, Eye, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function QuizzesPage() {
   const queryClient = useQueryClient();
@@ -11,6 +12,8 @@ export default function QuizzesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [addQuestionTo, setAddQuestionTo] = useState<any>(null);
   const [detailQuizId, setDetailQuizId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: quizzes, isLoading, isError } = useQuery({
     queryKey: ['admin-quizzes'],
@@ -114,6 +117,9 @@ export default function QuizzesPage() {
                       <Play size={16} />
                     </button>
                   )}
+                  <button onClick={() => setDeleteTarget({ id: q.id, title: q.title })} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Delete quiz">
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -124,6 +130,28 @@ export default function QuizzesPage() {
       {showCreate && <CreateQuizModal onClose={() => setShowCreate(false)} onSubmit={(d) => createQuiz.mutate(d)} loading={createQuiz.isPending} />}
       {addQuestionTo && <AddQuestionModal quiz={addQuestionTo} onClose={() => setAddQuestionTo(null)} onSubmit={(d) => addQuestion.mutate({ quizId: addQuestionTo.id, data: d })} loading={addQuestion.isPending} />}
       {detailQuizId && <QuizDetailModal quizId={detailQuizId} onClose={() => setDetailQuizId(null)} />}
+
+      {deleteTarget && (
+        <PasswordConfirmModal
+          title={`Delete Quiz "${deleteTarget.title}"?`}
+          description="This will permanently delete the quiz, all its questions, and all submissions."
+          confirmLabel="Delete Quiz"
+          loading={deleting}
+          danger
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            setDeleting(true);
+            api.delete(`/quizzes/${deleteTarget.id}`)
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: ['admin-quizzes'] });
+                toast.success('Quiz deleted');
+                setDeleteTarget(null);
+              })
+              .catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'))
+              .finally(() => setDeleting(false));
+          }}
+        />
+      )}
     </div>
   );
 }

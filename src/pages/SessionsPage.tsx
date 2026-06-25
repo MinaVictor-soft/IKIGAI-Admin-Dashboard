@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Play, Square, QrCode, Edit, Eye } from 'lucide-react';
+import { Plus, Play, Square, QrCode, Edit, Eye, Trash2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function SessionsPage() {
   const queryClient = useQueryClient();
@@ -13,6 +14,8 @@ export default function SessionsPage() {
   const [editSession, setEditSession] = useState<any>(null);
   const [viewAttendanceId, setViewAttendanceId] = useState<string | null>(null);
   const [viewQrSession, setViewQrSession] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: sessions, isLoading, isError } = useQuery({
     queryKey: ['sessions'],
@@ -121,6 +124,9 @@ export default function SessionsPage() {
                   <button onClick={() => setViewAttendanceId(s.id)} className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg" title={t('attendance')}>
                     <Eye size={16} />
                   </button>
+                  <button onClick={() => setDeleteTarget({ id: s.id, title: s.title })} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Delete session">
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -199,6 +205,28 @@ export default function SessionsPage() {
             <button onClick={() => setViewAttendanceId(null)} className="w-full mt-4 py-2 border border-gray-300 rounded-lg text-sm">{t('close')}</button>
           </div>
         </div>
+      )}
+
+      {deleteTarget && (
+        <PasswordConfirmModal
+          title={`Delete "${deleteTarget.title}"?`}
+          description="This will permanently delete this session and all its attendance records."
+          confirmLabel="Delete Session"
+          loading={deleting}
+          danger
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            setDeleting(true);
+            api.delete(`/admin/sessions/${deleteTarget.id}`)
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                toast.success('Session deleted');
+                setDeleteTarget(null);
+              })
+              .catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'))
+              .finally(() => setDeleting(false));
+          }}
+        />
       )}
     </div>
   );

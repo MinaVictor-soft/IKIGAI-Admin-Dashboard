@@ -861,7 +861,9 @@ export default function SportsPage() {
       )}
     </div>
   );
-}({ onClose, onSubmit, loading }: any) {
+}
+
+function CreateTeamForm({ onClose, onSubmit, loading }: any) {
   const { t } = useLang();
   const [form, setForm] = useState({ name: '', color: '#6366f1', maxRosterSize: 15 });
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));

@@ -2,14 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Users, Palette, Pencil } from 'lucide-react';
+import { Plus, Users, Palette, Pencil, Trash2 } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function TribesPage() {
   const queryClient = useQueryClient();
   const { t } = useLang();
   const [showCreate, setShowCreate] = useState(false);
   const [editTribe, setEditTribe] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: tribes, isLoading, isError } = useQuery({
     queryKey: ['tribes'],
@@ -66,7 +69,10 @@ export default function TribesPage() {
               onClick={() => setEditTribe(tribe)}
               className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer relative group"
             >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <button onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: tribe.id, name: tribe.name }); }} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete tribe">
+                  <Trash2 size={13} />
+                </button>
                 <Pencil size={14} className="text-gray-400" />
               </div>
               <div className="flex items-center gap-3 mb-3">
@@ -142,6 +148,28 @@ export default function TribesPage() {
           onClose={() => setEditTribe(null)}
           onSubmit={(data) => updateTribe.mutate({ id: editTribe.id, data })}
           loading={updateTribe.isPending}
+        />
+      )}
+
+      {deleteTarget && (
+        <PasswordConfirmModal
+          title={`Delete Tribe "${deleteTarget.name}"?`}
+          description="All members will be unassigned from this tribe before deletion."
+          confirmLabel="Delete Tribe"
+          loading={deleting}
+          danger
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            setDeleting(true);
+            api.delete(`/admin/tribes/${deleteTarget.id}`)
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: ['tribes'] });
+                toast.success('Tribe deleted');
+                setDeleteTarget(null);
+              })
+              .catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'))
+              .finally(() => setDeleting(false));
+          }}
         />
       )}
     </div>

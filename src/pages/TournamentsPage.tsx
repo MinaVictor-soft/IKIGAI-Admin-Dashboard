@@ -1,15 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import api from '../lib/api';
-import { Plus, Trophy, Users, Calendar, Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Plus, Trophy, Users, Calendar, Settings, Trash2 } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
 import { translations } from '../i18n/translations';
 import CreateTournamentModal from '../components/CreateTournamentModal';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function TournamentsPage() {
   const { lang } = useLang();
   const t = (key: string) => translations[lang]?.[key] || key;
+  const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const isRTL = lang === 'ar';
 
   const { data: tournaments = [], isLoading, refetch } = useQuery({
@@ -125,10 +130,15 @@ export default function TournamentsPage() {
                 </div>
               </div>
 
-              <button className="w-full mt-4 px-3 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center gap-2">
-                <Settings size={16} />
-                Manage
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button className="flex-1 px-3 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <Settings size={16} />
+                  Manage
+                </button>
+                <button onClick={() => setDeleteTarget({ id: tournament.id, name: tournament.name })} className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete tournament">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -138,6 +148,28 @@ export default function TournamentsPage() {
         <CreateTournamentModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => refetch()}
+        />
+      )}
+
+      {deleteTarget && (
+        <PasswordConfirmModal
+          title={`Delete Tournament "${deleteTarget.name}"?`}
+          description="This will permanently delete the tournament, all its groups, teams, and matches."
+          confirmLabel="Delete Tournament"
+          loading={deleting}
+          danger
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            setDeleting(true);
+            api.delete(`/tournaments/${deleteTarget.id}`)
+              .then(() => {
+                queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+                toast.success('Tournament deleted');
+                setDeleteTarget(null);
+              })
+              .catch((e: any) => toast.error(e.response?.data?.error?.message || 'Failed'))
+              .finally(() => setDeleting(false));
+          }}
         />
       )}
     </main>
