@@ -36,6 +36,7 @@ export default function SportsPage() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteTeamsDialog, setShowDeleteTeamsDialog] = useState(false);
   const [showDeleteMatchesDialog, setShowDeleteMatchesDialog] = useState(false);
+  const [showDeleteTournamentsDialog, setShowDeleteTournamentsDialog] = useState(false);
   const [deleteTeamTarget, setDeleteTeamTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: teams, isLoading: teamsLoading, isError: teamsError } = useQuery({

@@ -4,12 +4,14 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { Plus, Medal, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function LevelsPage() {
   const queryClient = useQueryClient();
   const { t } = useLang();
   const [showCreate, setShowCreate] = useState(false);
   const [editLevel, setEditLevel] = useState<any>(null);
+  const [showDeleteLevel, setShowDeleteLevel] = useState(false);
 
   const { data: levels, isLoading, isError } = useQuery({
     queryKey: ['levels'],
@@ -147,10 +149,19 @@ export default function LevelsPage() {
           level={editLevel}
           onClose={() => setEditLevel(null)}
           onSubmit={(data) => updateLevel.mutate({ id: editLevel.id, data })}
-          onDelete={() => {
-            if (confirm(t('confirmDeleteLevel'))) deleteLevel.mutate(editLevel.id);
-          }}
+          onDelete={() => setShowDeleteLevel(true)}
           loading={updateLevel.isPending}
+        />
+      )}
+
+      {showDeleteLevel && editLevel && (
+        <PasswordConfirmModal
+          title="Delete Level"
+          description={`Level "${editLevel.name}" will be permanently deleted.`}
+          confirmLabel="Delete Level"
+          onConfirm={() => { deleteLevel.mutate(editLevel.id); setShowDeleteLevel(false); setEditLevel(null); }}
+          onClose={() => setShowDeleteLevel(false)}
+          loading={deleteLevel.isPending}
         />
       )}
     </div>

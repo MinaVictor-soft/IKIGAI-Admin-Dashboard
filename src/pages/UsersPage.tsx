@@ -100,7 +100,6 @@ export default function UsersPage() {
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="">{t('allRoles')}</option>
           <option value="ATTENDEE">{t('attendee')}</option>
-          <option value="STAFF">{t('staff')}</option>
           <option value="ADMIN">{t('admin')}</option>
           <option value="SUPER_ADMIN">{t('superAdmin')}</option>
         </select>
@@ -151,11 +150,9 @@ export default function UsersPage() {
                         className={`px-2 py-0.5 rounded-full text-xs font-medium border-none cursor-pointer ${
                           u.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :
                           u.role === 'ADMIN' ? 'bg-orange-100 text-orange-700' :
-                          u.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-700'
                         }`}>
                         <option value="ATTENDEE">{t('attendee')}</option>
-                        <option value="STAFF">{t('staff')}</option>
                         <option value="ADMIN">{t('admin')}</option>
                         <option value="SUPER_ADMIN">{t('superAdmin')}</option>
                       </select>
@@ -234,7 +231,7 @@ export default function UsersPage() {
       {showDeleteAttendees && (
         <PasswordConfirmModal
           title="Delete All Attendees"
-          description="This will permanently delete all attendee accounts. Admin, Super Admin and Staff accounts will not be affected."
+          description="This will permanently delete all attendee accounts. Admin and Super Admin accounts will not be affected."
           confirmLabel="Delete All Attendees"
           loading={deletingAttendees}
           danger
@@ -272,7 +269,6 @@ function CreateUserModal({ tribes, onClose, onSubmit, loading }: any) {
           <input value={form.password} onChange={(e) => set('password', e.target.value)} type="password" placeholder={t('password')} required minLength={8} className="w-full px-3 py-2 border rounded-lg text-sm" />
           <select value={form.role} onChange={(e) => set('role', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
             <option value="ATTENDEE">{t('attendee')}</option>
-            <option value="STAFF">{t('staff')}</option>
             <option value="ADMIN">{t('admin')}</option>
             <option value="SUPER_ADMIN">{t('superAdmin')}</option>
           </select>
@@ -353,11 +349,9 @@ function UserDetailModal({ user, onClose, onAdjustXp, onChangeRole, adjustLoadin
                   className={`w-full px-2 py-0.5 rounded text-xs font-semibold border-none cursor-pointer disabled:opacity-50 ${
                     user.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :
                     user.role === 'ADMIN' ? 'bg-orange-100 text-orange-700' :
-                    user.role === 'STAFF' ? 'bg-blue-100 text-blue-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
                   <option value="ATTENDEE">{t('attendee')}</option>
-                  <option value="STAFF">{t('staff')}</option>
                   <option value="ADMIN">{t('admin')}</option>
                   <option value="SUPER_ADMIN">{t('superAdmin')}</option>
                 </select>

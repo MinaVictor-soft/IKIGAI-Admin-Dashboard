@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 interface Team {
   id: string;
@@ -18,6 +19,7 @@ export default function TeamsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
 
   const { data: teams = [], isLoading, refetch } = useQuery({
     queryKey: ['teams'],
@@ -124,11 +126,7 @@ export default function TeamsPage() {
                   {t('edit') || 'Edit'}
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm(t('confirmDelete') || 'Are you sure?')) {
-                      deleteMutation.mutate(team.id);
-                    }
-                  }}
+                  onClick={() => setDeleteTeamId(team.id)}
                   className="flex-1 flex items-center justify-center gap-2 bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200 transition"
                 >
                   <Trash2 size={16} />
@@ -204,6 +202,16 @@ export default function TeamsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {deleteTeamId && (\n        <PasswordConfirmModal
+          title={t('deleteTeam') || 'Delete Team'}
+          description="This team will be permanently deleted."
+          confirmLabel={t('delete') || 'Delete'}
+          onConfirm={() => { deleteMutation.mutate(deleteTeamId); setDeleteTeamId(null); }}
+          onClose={() => setDeleteTeamId(null)}
+          loading={deleteMutation.isPending}
+        />
       )}
     </div>
   );

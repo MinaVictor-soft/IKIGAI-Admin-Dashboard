@@ -4,6 +4,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Edit, Eye, EyeOff, Upload, FileText, Link, Tag } from 'lucide-react';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 export default function PublicationsPage() {
   const queryClient = useQueryClient();
@@ -13,6 +14,8 @@ export default function PublicationsPage() {
   const [uploadMode, setUploadMode] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editCategory, setEditCategory] = useState<any>(null);
+  const [deletePubId, setDeletePubId] = useState<string | null>(null);
+  const [deleteCatId, setDeleteCatId] = useState<string | null>(null);
 
   const { data: publications, isLoading } = useQuery({
     queryKey: ['admin-publications'],
@@ -256,7 +259,7 @@ export default function PublicationsPage() {
                         <Edit size={16} />
                       </button>
                       <button
-                        onClick={() => { if (confirm(lang === 'ar' ? 'حذف هذا المنشور؟' : 'Delete this publication?')) deleteMutation.mutate(pub.id); }}
+                        onClick={() => setDeletePubId(pub.id)}
                         className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
                       >
                         <Trash2 size={16} />
@@ -390,7 +393,7 @@ export default function PublicationsPage() {
                       <button onClick={() => setEditCategory(cat)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500">
                         <Edit size={14} />
                       </button>
-                      <button onClick={() => { if (confirm(lang === 'ar' ? 'حذف هذا التصنيف؟' : 'Delete category?')) deleteCategoryMutation.mutate(cat.id); }} className="p-1.5 rounded hover:bg-red-50 text-red-500">
+                      <button onClick={() => setDeleteCatId(cat.id)} className="p-1.5 rounded hover:bg-red-50 text-red-500">
                         <Trash2 size={14} />
                       </button>
                     </div>

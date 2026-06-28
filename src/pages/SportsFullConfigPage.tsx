@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Play, Trophy, Users, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import api from '../lib/api';
 import { useLang } from '../contexts/LangContext';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
 
 interface Team {
   id: string;
@@ -50,6 +51,7 @@ export default function SportsFullConfigPage() {
   const [playerForm, setPlayerForm] = useState({ userId: '', teamId: '', position: 'MID', jerseyNumber: 1 });
   const [matchForm, setMatchForm] = useState({ homeTeamId: '', awayTeamId: '', scheduledAt: '', groupName: 'Group A' });
   const [matchScore, setMatchScore] = useState({ matchId: '', homeScore: 0, awayScore: 0 });
+  const [deleteSportsTeamId, setDeleteSportsTeamId] = useState<string | null>(null);
 
   // Queries
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
@@ -269,7 +271,7 @@ export default function SportsFullConfigPage() {
                           <p className="text-sm text-slate-600">Max Roster: {team.maxRosterSize}</p>
                         </div>
                         <button
-                          onClick={() => deleteTeamMutation.mutate(team.id)}
+                          onClick={() => setDeleteSportsTeamId(team.id)}
                           className="p-2 hover:bg-red-100 rounded-lg text-red-600"
                         >
                           <Trash2 size={18} />
@@ -604,7 +606,28 @@ export default function SportsFullConfigPage() {
             )}
           </div>
         )}
+      {deleteSportsTeamId && (
+        <PasswordConfirmModal
+          title="Delete Team"
+          description="This team and all its roster data will be permanently deleted."
+          confirmLabel="Delete Team"
+          onConfirm={() => { deleteTeamMutation.mutate(deleteSportsTeamId); setDeleteSportsTeamId(null); }}
+          onClose={() => setDeleteSportsTeamId(null)}
+          loading={deleteTeamMutation.isPending}
+        />
+      )}
       </div>
+
+      {deleteSportsTeamId && (
+        <PasswordConfirmModal
+          title="Delete Team"
+          description="This team and all its roster data will be permanently deleted."
+          confirmLabel="Delete Team"
+          onConfirm={() => { deleteTeamMutation.mutate(deleteSportsTeamId); setDeleteSportsTeamId(null); }}
+          onClose={() => setDeleteSportsTeamId(null)}
+          loading={deleteTeamMutation.isPending}
+        />
+      )}
     </div>
   );
 }
