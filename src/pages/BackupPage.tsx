@@ -53,14 +53,14 @@ export default function BackupPage() {
     queryKey: ['backups'],
     queryFn: async () => {
       const res = await api.get('/admin/backup/list');
-      return res.data.data.backups as Backup[];
+      return res.data.backups as Backup[];
     },
   });
 
   const triggerMutation = useMutation({
     mutationFn: () => api.post('/admin/backup/trigger'),
     onSuccess: (res) => {
-      const sizeKb = res.data?.data?.sizeKb;
+      const sizeKb = res.data?.sizeKb;
       toast.success(`Backup saved${sizeKb ? ` (${sizeKb} KB)` : ''}`);
       queryClient.invalidateQueries({ queryKey: ['backups'] });
     },
@@ -97,7 +97,7 @@ export default function BackupPage() {
     setRestoring(true);
     try {
       const res = await api.post(`/admin/backup/${restoreTarget.filename}/restore`);
-      const total = res.data?.data?.totalRecords;
+      const total = res.data?.totalRecords;
       toast.success(`Database restored — ${total ?? '?'} records`);
       setRestoreTarget(null);
       logout();
