@@ -18,6 +18,7 @@ import LevelsPage from './pages/LevelsPage';
 import PublicationsPage from './pages/PublicationsPage';
 import SettingsPage from './pages/SettingsPage';
 import TournamentDetailsPage from './pages/TournamentDetailsPage';
+import BackupPage from './pages/BackupPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="tournament/:id" element={<TournamentDetailsPage />} />
                 <Route path="publications" element={<PublicationsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="backup" element={<BackupPage />} />
               </Route>
             </Routes>
             <Toaster position="top-right" />

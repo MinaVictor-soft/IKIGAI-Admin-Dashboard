@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Gift,
-  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Flag
+  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Flag, Database
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,6 +20,10 @@ const navItems = [
   { to: '/tournaments', icon: Flag, key: 'tournaments' },
   { to: '/publications', icon: BookOpen, key: 'publications' },
   { to: '/settings', icon: Settings, key: 'settings' },
+];
+
+const superAdminNavItems = [
+  { to: '/backup', icon: Database, label: 'Backup & Restore' },
 ];
 
 export default function DashboardLayout() {
@@ -64,6 +68,28 @@ export default function DashboardLayout() {
               {t(key)}
             </NavLink>
           ))}
+          {user?.role === 'SUPER_ADMIN' && (
+            <>
+              <div className="pt-2 pb-1 px-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Super Admin</span>
+              </div>
+              {superAdminNavItems.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`
+                  }
+                >
+                  <Icon size={18} />
+                  {label}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-100">

@@ -46,7 +46,7 @@ interface AdminSettings {
 }
 
 export default function SettingsPage() {
-  const { t } = useLang();
+  const { } = useLang();
   const [config, setConfig] = useState(DEFAULT_NAV_CONFIG);
   const [savedConfig, setSavedConfig] = useState(DEFAULT_NAV_CONFIG);
   const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);

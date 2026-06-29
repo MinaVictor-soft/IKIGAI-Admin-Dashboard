@@ -204,7 +204,8 @@ export default function TeamsPage() {
         </div>
       )}
 
-      {deleteTeamId && (\n        <PasswordConfirmModal
+      {deleteTeamId && (
+        <PasswordConfirmModal
           title={t('deleteTeam') || 'Delete Team'}
           description="This team will be permanently deleted."
           confirmLabel={t('delete') || 'Delete'}
