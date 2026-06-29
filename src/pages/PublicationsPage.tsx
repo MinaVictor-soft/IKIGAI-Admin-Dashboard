@@ -367,6 +367,38 @@ export default function PublicationsPage() {
       )}
 
       {/* Categories Management Modal */}
+      {/* Delete Publication Confirm */}
+      {deletePubId && (
+        <PasswordConfirmModal
+          title={lang === 'ar' ? 'حذف المنشور؟' : 'Delete Publication?'}
+          description={lang === 'ar' ? 'سيتم حذف هذا المنشور نهائياً.' : 'This publication will be permanently deleted.'}
+          confirmLabel={lang === 'ar' ? 'حذف' : 'Delete'}
+          loading={deleteMutation.isPending}
+          onClose={() => setDeletePubId(null)}
+          onConfirm={() => {
+            deleteMutation.mutate(deletePubId, {
+              onSuccess: () => setDeletePubId(null),
+            });
+          }}
+        />
+      )}
+
+      {/* Delete Category Confirm */}
+      {deleteCatId && (
+        <PasswordConfirmModal
+          title={lang === 'ar' ? 'حذف التصنيف؟' : 'Delete Category?'}
+          description={lang === 'ar' ? 'سيتم حذف هذا التصنيف نهائياً.' : 'This category will be permanently deleted.'}
+          confirmLabel={lang === 'ar' ? 'حذف' : 'Delete'}
+          loading={deleteCategoryMutation.isPending}
+          onClose={() => setDeleteCatId(null)}
+          onConfirm={() => {
+            deleteCategoryMutation.mutate(deleteCatId, {
+              onSuccess: () => setDeleteCatId(null),
+            });
+          }}
+        />
+      )}
+
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
