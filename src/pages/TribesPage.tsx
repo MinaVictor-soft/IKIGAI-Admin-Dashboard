@@ -69,23 +69,23 @@ export default function TribesPage() {
               onClick={() => setEditTribe(tribe)}
               className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer relative group"
             >
-              <div className="absolute top-3 right-3 flex gap-1">
+              <div className="absolute top-3 left-3 flex gap-1.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditTribe(tribe); }}
-                  className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  className="p-1.5 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 rounded-lg transition-colors"
                   title="Edit tribe"
                 >
                   <Pencil size={13} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: tribe.id, name: tribe.name }); }}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors"
                   title="Delete tribe"
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 mt-7">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   style={{ backgroundColor: tribe.color || '#6366F1' }}
