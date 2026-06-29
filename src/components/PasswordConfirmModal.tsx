@@ -11,6 +11,7 @@ interface PasswordConfirmModalProps {
   onClose: () => void;
   loading?: boolean;
   danger?: boolean;
+  zIndex?: string;
 }
 
 export default function PasswordConfirmModal({
@@ -21,6 +22,7 @@ export default function PasswordConfirmModal({
   onClose,
   loading = false,
   danger = true,
+  zIndex = 'z-50',
 }: PasswordConfirmModalProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +45,7 @@ export default function PasswordConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className={`fixed inset-0 bg-black/50 ${zIndex} flex items-center justify-center p-4`} onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">

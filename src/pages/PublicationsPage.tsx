@@ -390,6 +390,7 @@ export default function PublicationsPage() {
           description={lang === 'ar' ? 'سيتم حذف هذا التصنيف نهائياً.' : 'This category will be permanently deleted.'}
           confirmLabel={lang === 'ar' ? 'حذف' : 'Delete'}
           loading={deleteCategoryMutation.isPending}
+          zIndex="z-[60]"
           onClose={() => setDeleteCatId(null)}
           onConfirm={() => {
             deleteCategoryMutation.mutate(deleteCatId, {
