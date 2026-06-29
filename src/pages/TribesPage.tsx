@@ -69,11 +69,21 @@ export default function TribesPage() {
               onClick={() => setEditTribe(tribe)}
               className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer relative group"
             >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: tribe.id, name: tribe.name }); }} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete tribe">
+              <div className="absolute top-3 right-3 flex gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditTribe(tribe); }}
+                  className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  title="Edit tribe"
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: tribe.id, name: tribe.name }); }}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete tribe"
+                >
                   <Trash2 size={13} />
                 </button>
-                <Pencil size={14} className="text-gray-400" />
               </div>
               <div className="flex items-center gap-3 mb-3">
                 <div
