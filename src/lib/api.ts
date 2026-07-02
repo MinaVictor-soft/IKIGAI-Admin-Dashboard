@@ -12,6 +12,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const conferenceId = localStorage.getItem('selectedConferenceId');
+  if (conferenceId) {
+    config.headers['X-Conference-Id'] = conferenceId;
+  }
   return config;
 });
 

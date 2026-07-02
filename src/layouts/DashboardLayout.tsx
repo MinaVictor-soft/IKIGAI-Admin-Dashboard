@@ -3,9 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Gift,
-  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Flag, Database
+  HelpCircle, Swords, LogOut, Menu, X, Layers, Globe, Medal, BookOpen, Settings, Flag, Database, Building2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../lib/api';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, key: 'dashboard' },
@@ -31,6 +32,31 @@ export default function DashboardLayout() {
   const { lang, setLang, t } = useLang();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [conferences, setConferences] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [selectedConferenceId, setSelectedConferenceId] = useState<string>(
+    () => localStorage.getItem('selectedConferenceId') || ''
+  );
+
+  useEffect(() => {
+    api.get('/conferences').then((res: any) => {
+      const list = Array.isArray(res.data) ? res.data : [];
+      setConferences(list);
+      if (!selectedConferenceId && list.length > 0) {
+        const first = list[0].id;
+        setSelectedConferenceId(first);
+        localStorage.setItem('selectedConferenceId', first);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleConferenceChange = (id: string) => {
+    setSelectedConferenceId(id);
+    if (id) {
+      localStorage.setItem('selectedConferenceId', id);
+    } else {
+      localStorage.removeItem('selectedConferenceId');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -124,10 +150,25 @@ export default function DashboardLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6 shrink-0">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6 shrink-0 gap-3">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+          {conferences.length > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Building2 size={16} className="text-gray-400" />
+              <select
+                value={selectedConferenceId}
+                onChange={(e) => handleConferenceChange(e.target.value)}
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Conferences</option>
+                {conferences.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+          )}
         </header>
 
         {/* Page content */}
